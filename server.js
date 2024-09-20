@@ -59,28 +59,45 @@ app.post('/login', async (req, res) => {
     res.json({ message: 'Connexion réussie', token });
 });
 
-// GET /users : Récupérer la liste de tous les utilisateurs
+// GET /users
 app.get('/users', async (req, res) => {
     try {
-        const users = await User.find({}, 'username'); // On récupère uniquement les noms d'utilisateur
+        const users = await User.find({}, 'username');
         res.json(users);
     } catch (error) {
         res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs.' });
     }
 });
 
-// PUT /users/:id : Mettre à jour un utilisateur
+// PUT /users/:id
 app.put('/users/:id', async (req, res) => {
     try {
         const userId = req.params.id;
         const { username } = req.body;
-
-        // Trouver l'utilisateur par son ID et mettre à jour ses informations
         const updatedUser = await User.findByIdAndUpdate(userId, { username }, { new: true });
 
         res.json(updatedUser);
     } catch (error) {
         res.status(500).json({ error: 'Erreur lors de la mise à jour de l\'utilisateur.' });
+    }
+});
+
+// PUT /users/:id/password
+app.put('/users/:id/password', async (req, res) => {
+    const { newPassword } = req.body;
+    const userId = req.params.id;
+
+    try {
+        if (!newPassword) {
+            return res.status(400).json({ error: 'Le mot de passe est requis.' });
+        }
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        const updatedUser = await User.findByIdAndUpdate(userId, { password: hashedPassword }, { new: true });
+
+        res.json({ message: 'Mot de passe mis à jour avec succès.' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erreur lors de la mise à jour du mot de passe.' });
     }
 });
 
